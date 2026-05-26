@@ -25,7 +25,6 @@ ml-segmentacao-predicao/
 ├── notebooks/
 │   └── 01_preparacao.ipynb  # ✅ Etapa 1 — concluída (Bia)
 │
-├── predict.py               # Etapa 6 — a preencher (Todos)
 └── README.md
 ```
 
