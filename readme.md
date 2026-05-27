@@ -24,6 +24,7 @@ ml-segmentacao-predicao/
 │
 ├── notebooks/
 │   └── 01_preparacao.ipynb  # ✅ Etapa 1 — concluída (Bia)
+│   └── 02_clusterizacao.ipynb  # ✅ Etapa 2 — concluída (Valéria)
 │
 └── README.md
 ```
@@ -104,8 +105,8 @@ Abra qualquer notebook → canto superior direito → **Select Kernel** → esco
 | Etapa                       | Responsável | Status                         |
 | --------------------------- | ----------- | ------------------------------ |
 | 1. Preparação do Dataset    | Bia         | ✅ Concluída                   |
-| 2. Clusterização            | Valéria     | ⏳ Aguardando merge da Etapa 1 |
-| 3. Regressão Global         | Fátima      | 🔒 Aguarda Etapa 2             |
+| 2. Clusterização            | Valéria     | ✅ Concluída                   |
+| 3. Regressão Global         | Fátima      | ⏳ Aguardando merge da Etapa 2 |
 | 4. Regressão por Cluster    | Ian         | 🔒 Aguarda Etapa 2             |
 | 5. Comparação de Resultados | Rebeca      | 🔒 Aguarda Etapas 3 e 4        |
 | 6. Predição Final           | Todos       | 🔒 Aguarda Etapa 5             |
