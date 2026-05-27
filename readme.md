@@ -121,7 +121,6 @@ Abra qualquer notebook → canto superior direito → **Select Kernel** → esco
 
 #### Silhouette Score final
 
-```text
 K=3 → 0.2305
 
 | Cluster | Quantidade |
