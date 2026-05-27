@@ -100,6 +100,62 @@ Abra qualquer notebook → canto superior direito → **Select Kernel** → esco
 
 ---
 
+## ✅ Etapa 2 — Clusterização (02_clusterizacao.ipynb)
+
+**Responsável:** Valéria | **Revisora:** Fátima
+
+### O que foi feito
+
+- Carregamento dos dados normalizados (`X_scaled.csv`) gerados na Etapa 1
+- Aplicação do algoritmo de clusterização **K-Means**
+- Avaliação do número ideal de clusters utilizando:
+  - Método Elbow
+  - Silhouette Score
+- Escolha de `K=3` por apresentar boa separação dos grupos e melhor interpretabilidade
+- Aplicação do PCA (Principal Component Analysis) para redução de dimensionalidade e visualização dos clusters em 2D
+- Criação da coluna `cluster` no dataset
+- Interpretação estatística dos grupos encontrados
+- Exportação do dataset clusterizado e do modelo treinado
+
+### Resultado da Clusterização
+
+#### Silhouette Score final
+
+```text
+K=3 → 0.2305
+
+| Cluster | Quantidade |
+| ------- | ---------- |
+| 0       | 649        |
+| 1       | 325        |
+| 2       | 364        |
+
+
+Interpretação dos Clusters
+Cluster	Perfil resumido	Custo médio
+- 0	Não fumantes com idade e IMC variados → perfil de menor risco	Baixo a médio
+- 1	Fumantes com IMC elevado → perfil de maior risco e maior custo	Alto
+- 2	Não fumantes mais velhos e/ou com mais filhos → perfil intermediário	Médio
+
+
+Observação: A variável smoker demonstrou ser o principal fator de separação entre os clusters, indicando forte relação entre tabagismo e aumento dos custos de seguro de saúde.
+
+Visualizações geradas
+- Gráfico Elbow
+- Gráfico Silhouette Score
+- Visualização dos clusters com PCA
+- Distribuição dos clusters por custo (charges)
+
+Arquivos gerados
+
+| Arquivo                       |  Descrição                    |
+| -------                       | ----------                    |
+| data/insurance_clustered.csv  | Dataset com coluna de cluster |
+| models/kmeans_model.pkl       | Modelo K-Means treinado       |
+
+	
+----
+
 ## 🗓️ Próximas etapas
 
 | Etapa                       | Responsável | Status                         |
