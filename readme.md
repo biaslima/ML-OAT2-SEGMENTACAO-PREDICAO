@@ -152,6 +152,34 @@ Arquivos gerados
 | data/insurance_clustered.csv  | Dataset com coluna de cluster |
 | models/kmeans_model.pkl       | Modelo K-Means treinado       |
 
+## ✅ Etapa 3 — Regressão Global (`03_regressao_global.ipynb`)
+
+**Responsável:** Fátima | **Revisor:** Ian
+
+### O que foi feito
+Nesta etapa, foram treinados modelos de regressão utilizando todo o conjunto de dados de forma integrada. O objetivo foi estabelecer uma linha de base (baseline) de desempenho preditivo global, permitindo avaliar posteriormente se a segmentação por clusters trará melhorias reais nas estimativas.
+
+Foram testados e validados três algoritmos distintos conforme o pipeline definido:
+- **Regressão Linear**
+- **KNN Regressor** (configurado com `n_neighbors=5`)
+- **Decision Tree Regressor** (configurado com `random_state=42`)
+
+A base de dados foi dividida utilizando a proporção padrão de 80% para treinamento e 20% para a fase de testes.
+
+### Métricas da Regressão Global
+Abaixo está o mapeamento comparativo de desempenho de cada algoritmo, ordenado pelo coeficiente de determinação ($R^2$):
+
+| Modelo | MAE | MSE | RMSE | R² |
+| :--- | :--- | :--- | :--- | :--- |
+| **Regressão Linear** | 4181.1944 | 33596915.8513 | 5796.2847 | 0.7833 |
+| **KNN Regressor** | 4261.2725 | 38221805.9901 | 6182.3787 | 0.7535 |
+| **Decision Tree Regressor** | 3073.4981 | 43232675.2758 | 6575.1559 | 0.7212 |
+
+### Conclusões da Etapa
+* O modelo de **Regressão Linear** obteve o maior coeficiente de determinação ($R^2 = 0.7833$), sendo capaz de explicar aproximadamente 78,33% da variabilidade dos custos de seguro de forma global.
+* A **Árvore de Decisão** (*Decision Tree*) registrou o menor Erro Absoluto Médio ($MAE = 3073.4981$), o que indica que, na maior parte das previsões cotidianas, ela erra por margens menores. No entanto, por apresentar um $MSE$ mais elevado, conclui-se que o modelo sofreu penalizações severas por erros mais discrepantes (outliers) em casos específicos da distribuição.
+
+*Nota: O arquivo contendo estes resultados foi exportado com sucesso para `data/resultados_global.csv`, estando pronto para consumo na Etapa 5 (Comparação de Resultados).*
 	
 ----
 
@@ -161,7 +189,7 @@ Arquivos gerados
 | --------------------------- | ----------- | ------------------------------ |
 | 1. Preparação do Dataset    | Bia         | ✅ Concluída                   |
 | 2. Clusterização            | Valéria     | ✅ Concluída                   |
-| 3. Regressão Global         | Fátima      | ⏳ Aguardando merge da Etapa 2 |
+| 3. Regressão Global         | Fátima      | ✅ Concluída                   |
 | 4. Regressão por Cluster    | Ian         | 🔒 Aguarda Etapa 2             |
 | 5. Comparação de Resultados | Rebeca      | 🔒 Aguarda Etapas 3 e 4        |
 | 6. Predição Final           | Todos       | 🔒 Aguarda Etapa 5             |
