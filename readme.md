@@ -17,14 +17,25 @@
 ml-segmentacao-predicao/
 │
 ├── data/
-│   ├── insurance.csv        # Dataset original (não modificar!)
-│   ├── X_scaled.csv         # Variáveis de entrada normalizadas (gerado pela Etapa 1)
-│   ├── y.csv                # Variável alvo: charges (gerado pela Etapa 1)
-│   └── scaler.pkl           # Objeto StandardScaler salvo (necessário para predict.py)
+│   ├── insurance.csv              # Dataset original (não modificar!)
+│   ├── X_scaled.csv               # Variáveis de entrada normalizadas (Etapa 1)
+│   ├── y.csv                      # Variável alvo: charges (Etapa 1)
+│   ├── scaler.pkl                 # StandardScaler treinado (necessário para Etapa 6)
+│   ├── cluster_labels.csv         # Rótulos dos clusters (Etapa 2)
+│   ├── kmeans_model.pkl           # Modelo K-Means treinado (Etapa 2)
+│   ├── resultados_global.csv      # Métricas dos modelos globais (Etapa 3)
+│   ├── resultados_clusters.csv    # Métricas dos modelos por cluster (Etapa 4)
+│   ├── modelo_cluster_0.pkl       # Melhor modelo — Cluster 0 (Etapa 4)
+│   ├── modelo_cluster_1.pkl       # Melhor modelo — Cluster 1 (Etapa 4)
+│   ├── modelo_cluster_2.pkl       # Melhor modelo — Cluster 2 (Etapa 4)
+│   ├── comparacao_modelos_clusters.png  # R² e MAE por modelo/cluster (Etapa 4)
+│   └── previsto_vs_real_clusters.png    # Previsto vs Real por cluster (Etapa 4)
 │
 ├── notebooks/
-│   └── 01_preparacao.ipynb  # ✅ Etapa 1 — concluída (Bia)
-│   └── 02_clusterizacao.ipynb  # ✅ Etapa 2 — concluída (Valéria)
+│   ├── 01_preparacao.ipynb        # ✅ Etapa 1 — concluída (Bia)
+│   ├── 02_clusterizacao.ipynb     # ✅ Etapa 2 — concluída (Valéria)
+│   ├── 03_regressao_global.ipynb  # ✅ Etapa 3 — concluída (Fátima)
+│   └── 04_regressao_clusters.ipynb # ✅ Etapa 4 — concluída (Ian)
 │
 └── README.md
 ```
@@ -181,6 +192,54 @@ Abaixo está o mapeamento comparativo de desempenho de cada algoritmo, ordenado 
 
 *Nota: O arquivo contendo estes resultados foi exportado com sucesso para `data/resultados_global.csv`, estando pronto para consumo na Etapa 5 (Comparação de Resultados).*
 	
+## ✅ Etapa 4 — Regressão por Cluster (`04_regressao_clusters.ipynb`)
+
+**Responsável:** Ian | **Revisora:** Rebeca
+
+### O que foi feito
+
+- Carregamento de `X_scaled.csv`, `y.csv` e `cluster_labels.csv` gerados nas etapas anteriores
+- Para cada cluster (0, 1, 2): filtragem dos dados, divisão treino/teste (80%/20%, `random_state=42`) e treinamento dos mesmos 3 modelos da Etapa 3 para comparação direta
+- Avaliação com MAE, MSE, RMSE e R²
+- Identificação do melhor modelo por cluster (maior R²)
+- Geração de visualizações comparativas (R² e MAE por modelo/cluster; Previsto vs Real)
+
+### Métricas por Cluster
+
+| Cluster | Modelo | MAE | RMSE | R² |
+| :--- | :--- | :--- | :--- | :--- |
+| 0 | Regressão Linear | $4,278.50 | $6,063.40 | 0.6373 |
+| 0 | **KNN Regressor** | **$3,540.22** | **$5,622.67** | **0.6881** |
+| 0 | Decision Tree | $4,109.21 | $7,829.78 | 0.3952 |
+| 1 | Regressão Linear | $4,070.04 | $6,420.88 | 0.7581 |
+| 1 | **KNN Regressor** | **$3,464.89** | **$5,575.57** | **0.8176** |
+| 1 | Decision Tree | $3,104.99 | $6,507.09 | 0.7516 |
+| 2 | Regressão Linear | $3,286.58 | $4,589.26 | 0.8612 |
+| 2 | **KNN Regressor** | **$2,627.72** | **$3,342.84** | **0.9264** |
+| 2 | Decision Tree | $3,080.99 | $6,021.57 | 0.7611 |
+
+### Melhor modelo por cluster vs. Baseline Global
+
+| | Modelo | R² | MAE |
+| :--- | :--- | :--- | :--- |
+| Baseline Global | KNN Regressor | 0.8028 | $3,514.20 |
+| Cluster 0 | KNN Regressor | 0.6881 | $3,540.22 |
+| Cluster 1 | KNN Regressor | 0.8176 | $3,464.89 |
+| Cluster 2 | KNN Regressor | 0.9264 | $2,627.72 |
+
+**KNN Regressor foi o melhor modelo nos 3 clusters.** Cluster 2 (não-fumantes mais velhos/com filhos) apresentou o maior ganho com a segmentação (R²=0.9264 vs 0.8028 do baseline). Cluster 0 ficou abaixo do baseline global em R², o que pode indicar maior heterogeneidade interna neste grupo.
+
+### Arquivos gerados
+
+| Arquivo | Descrição |
+| --- | --- |
+| `data/resultados_clusters.csv` | Métricas de todos os modelos por cluster |
+| `data/modelo_cluster_0.pkl` | KNeighborsRegressor treinado — Cluster 0 |
+| `data/modelo_cluster_1.pkl` | KNeighborsRegressor treinado — Cluster 1 |
+| `data/modelo_cluster_2.pkl` | KNeighborsRegressor treinado — Cluster 2 |
+| `data/comparacao_modelos_clusters.png` | R² e MAE comparativos com linha de baseline |
+| `data/previsto_vs_real_clusters.png` | Scatter Previsto vs Real por cluster |
+
 ----
 
 ## 🗓️ Próximas etapas
@@ -190,7 +249,7 @@ Abaixo está o mapeamento comparativo de desempenho de cada algoritmo, ordenado 
 | 1. Preparação do Dataset    | Bia         | ✅ Concluída                   |
 | 2. Clusterização            | Valéria     | ✅ Concluída                   |
 | 3. Regressão Global         | Fátima      | ✅ Concluída                   |
-| 4. Regressão por Cluster    | Ian         | 🔒 Aguarda Etapa 2             |
+| 4. Regressão por Cluster    | Ian         | ✅ Concluída                   |
 | 5. Comparação de Resultados | Rebeca      | 🔒 Aguarda Etapas 3 e 4        |
 | 6. Predição Final           | Todos       | 🔒 Aguarda Etapa 5             |
 
