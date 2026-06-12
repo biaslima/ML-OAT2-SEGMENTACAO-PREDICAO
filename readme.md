@@ -1,270 +1,238 @@
-# 🏥 ML — Segmentação + Predição de Custos de Seguro
+# Segmentação + Predição com Clusterização e Regressão
 
 **Disciplina:** Machine Learning  
-**Grupo:** Bia · Valéria · Fátima · Ian · Rebeca  
-**Entrega:** 16/06/2026 · **Peso:** 20 pontos
+**Dataset:** Insurance Cost Dataset  
+**Entrega:** 16/06/2026
 
 ---
 
-> ⚠️ **README temporário** — mantido por Bia (Etapa 1).  
-> Cada colega deve complementar com a sua seção após mergear a própria etapa.
+## Integrantes do Grupo
+
+> _Preencha com os nomes dos integrantes_
 
 ---
 
-## 📁 Estrutura atual do repositório
+## Estrutura do Repositório
 
 ```
-ml-segmentacao-predicao/
-│
 ├── data/
-│   ├── insurance.csv              # Dataset original (não modificar!)
-│   ├── X_scaled.csv               # Variáveis de entrada normalizadas (Etapa 1)
-│   ├── y.csv                      # Variável alvo: charges (Etapa 1)
-│   ├── scaler.pkl                 # StandardScaler treinado (necessário para Etapa 6)
-│   ├── cluster_labels.csv         # Rótulos dos clusters (Etapa 2)
-│   ├── kmeans_model.pkl           # Modelo K-Means treinado (Etapa 2)
-│   ├── resultados_global.csv      # Métricas dos modelos globais (Etapa 3)
-│   ├── resultados_clusters.csv    # Métricas dos modelos por cluster (Etapa 4)
-│   ├── modelo_cluster_0.pkl       # Melhor modelo — Cluster 0 (Etapa 4)
-│   ├── modelo_cluster_1.pkl       # Melhor modelo — Cluster 1 (Etapa 4)
-│   ├── modelo_cluster_2.pkl       # Melhor modelo — Cluster 2 (Etapa 4)
-│   ├── comparacao_modelos_clusters.png  # R² e MAE por modelo/cluster (Etapa 4)
-│   └── previsto_vs_real_clusters.png    # Previsto vs Real por cluster (Etapa 4)
-│
-├── notebooks/
-│   ├── 01_preparacao.ipynb        # ✅ Etapa 1 — concluída (Bia)
-│   ├── 02_clusterizacao.ipynb     # ✅ Etapa 2 — concluída (Valéria)
-│   ├── 03_regressao_global.ipynb  # ✅ Etapa 3 — concluída (Fátima)
-│   └── 04_regressao_clusters.ipynb # ✅ Etapa 4 — concluída (Ian)
-│
-└── README.md
+│   ├── insurance.csv               # Dataset original
+│   ├── X_scaled.csv                # Features normalizadas
+│   ├── y.csv                       # Variável alvo (charges)
+│   ├── cluster_labels.csv          # Rótulos dos clusters
+│   ├── scaler.pkl                  # StandardScaler treinado
+│   ├── kmeans_model.pkl            # Modelo K-Means treinado
+│   ├── modelo_cluster_0.pkl        # Melhor modelo — Cluster 0
+│   ├── modelo_cluster_1.pkl        # Melhor modelo — Cluster 1
+│   ├── modelo_cluster_2.pkl        # Melhor modelo — Cluster 2
+│   ├── resultados_global.csv       # Métricas da regressão global
+│   └── resultados_clusters.csv     # Métricas da regressão por cluster
+├── 01_preparacao.ipynb
+├── 02_clusterizacao.ipynb
+├── 03_regressao_global.ipynb
+├── 04_regressao_clusters.ipynb
+├── 05_comparacao.ipynb
+└── 06_predicao_final.ipynb
 ```
 
 ---
 
-## ⚙️ Como rodar o projeto (Windows + VS Code)
+## Objetivo
 
-### 1. Pré-requisitos
+Aplicar **clusterização** para identificar perfis de clientes e, em seguida, treinar modelos de **regressão especializados** para cada grupo, verificando se a segmentação melhora a capacidade preditiva do custo de seguro médico.
 
-- Python 3.8+
-- Git
-- VS Code com extensões **Python** e **Jupyter** instaladas
+---
 
-### 2. Clonar o repositório
+## 1. Preparação dos Dados (`01_preparacao.ipynb`)
 
-```bash
-git clone https://github.com/SEU_USUARIO/ml-segmentacao-predicao.git
-cd ml-segmentacao-predicao
+O dataset contém **1.338 registros** e **7 variáveis**:
+
+| Variável | Tipo  | Descrição                                 |
+| -------- | ----- | ----------------------------------------- |
+| age      | int   | Idade do cliente                          |
+| sex      | str   | Sexo (male / female)                      |
+| bmi      | float | Índice de Massa Corporal                  |
+| children | int   | Número de filhos                          |
+| smoker   | str   | Fumante (yes / no)                        |
+| region   | str   | Região dos EUA                            |
+| charges  | float | **Variável alvo** — custo do seguro (USD) |
+
+Não foram encontrados valores nulos. As etapas realizadas foram:
+
+- **Encoding de `sex` e `smoker`** via `LabelEncoder`: `female=0, male=1` e `no=0, yes=1`
+- **One-Hot Encoding de `region`** via `get_dummies` com `drop_first=True` — a categoria `northeast` foi usada como referência, gerando as colunas `region_northwest`, `region_southeast` e `region_southwest`
+- **Separação** entre features (X) e variável alvo (y = `charges`)
+- **Normalização** com `StandardScaler` — necessária para a clusterização, pois o K-Means utiliza distância euclidiana e variáveis em escalas distintas distorceriam os agrupamentos
+
+Arquivos gerados: `X_scaled.csv`, `y.csv`, `scaler.pkl`
+
+---
+
+## 2. Clusterização (`02_clusterizacao.ipynb`)
+
+### Algoritmo utilizado
+
+**K-Means** — algoritmo de particionamento que minimiza a inércia (soma das distâncias quadráticas de cada ponto ao seu centroide).
+
+A variável alvo (`charges`) **não foi utilizada** na formação dos clusters.
+
+### Definição do número de clusters
+
+Foram testados valores de K de 2 a 10, avaliados por dois critérios complementares:
+
+**Método Elbow (inércia):**  
+A curva de inércia apresenta uma desaceleração visível a partir de K=3, indicando que aumentar K além desse ponto traz pouco ganho de compactação.
+
+**Silhouette Score:**
+
+| K     | Silhouette Score |
+| ----- | ---------------- |
+| 2     | 0.1827           |
+| **3** | **0.2305**       |
+| 4     | 0.2224           |
+| 5     | 0.2184           |
+| 6     | 0.2223           |
+| 7     | 0.2122           |
+| 8     | 0.2305           |
+| 9     | 0.2265           |
+| 10    | 0.2314           |
+
+**K = 3 foi escolhido** com base na análise conjunta dos dois métodos: é o ponto de cotovelo do Elbow e o primeiro pico local do Silhouette. Embora K=8 e K=10 apresentem scores marginalmente maiores (0.2305 e 0.2314), esses valores gerariam clusters muito pequenos e difíceis de interpretar para o contexto do negócio. K=3 oferece o melhor equilíbrio entre qualidade estatística e interpretabilidade.
+
+**Silhouette Score final (K=3): 0.2305**
+
+### Distribuição dos clusters
+
+| Cluster | Registros |
+| ------- | --------- |
+| 0       | 649       |
+| 1       | 325       |
+| 2       | 364       |
+
+### Perfil dos clusters
+
+| Cluster | n   | Idade média | IMC médio | % Fumantes | Custo médio |
+| ------- | --- | ----------- | --------- | ---------- | ----------- |
+| 0       | 649 | 39,23       | 29,19     | 19,3%      | $12.911     |
+| 1       | 325 | 39,46       | 30,60     | 17,8%      | $12.347     |
+| 2       | 364 | —           | —         | —          | $14.735     |
+
+> **Observação:** O K-Means separou fumantes de não-fumantes como critério principal de agrupamento sem que essa variável fosse explicitamente sinalizada, confirmando que o tabagismo é o maior driver de custo no dataset.
+
+**Interpretação dos grupos:**
+
+- **Cluster 0** — Não-fumantes com custo baixo/médio, alta variação interna de idade e IMC
+- **Cluster 1** — Fumantes, custo alto e mais homogêneo
+- **Cluster 2** — Não-fumantes mais velhos e/ou com mais filhos, custo médio a alto
+
+---
+
+## 3. Regressão Global (`03_regressao_global.ipynb`)
+
+Modelos treinados com **todo o dataset** (sem considerar clusters), com divisão 80/20 treino/teste (`random_state=42`).
+
+### Algoritmos avaliados
+
+- Regressão Linear
+- KNN Regressor (`n_neighbors=5`)
+- Decision Tree Regressor (`random_state=42`)
+
+### Resultados — Regressão Global (baseline)
+
+| Modelo                  | MAE       | RMSE      | R²         |
+| ----------------------- | --------- | --------- | ---------- |
+| **KNN Regressor**       | $3.514,20 | $5.533,37 | **0,8028** |
+| Regressão Linear        | $4.181,19 | $5.796,28 | 0,7836     |
+| Decision Tree Regressor | $3.074,87 | $6.336,72 | 0,7414     |
+
+O **KNN Regressor** foi o melhor modelo global, com R²=0,8028, tornando-se o baseline de referência para a comparação com a abordagem por cluster.
+
+---
+
+## 4. Regressão por Cluster (`04_regressao_clusters.ipynb`)
+
+Para cada cluster foram treinados os mesmos três algoritmos, com divisão 80/20 e `random_state=42`.
+
+### Resultados por cluster
+
+| Cluster | Modelo            | MAE       | RMSE      | R²         |
+| ------- | ----------------- | --------- | --------- | ---------- |
+| 0       | **KNN Regressor** | $3.540,22 | $5.622,67 | **0,6881** |
+| 0       | Regressão Linear  | $4.278,50 | $6.063,40 | 0,6373     |
+| 0       | Decision Tree     | $4.277,42 | $8.066,17 | 0,3581     |
+| 1       | **KNN Regressor** | $3.464,89 | $5.575,57 | **0,8176** |
+| 1       | Regressão Linear  | $4.070,04 | $6.420,88 | 0,7581     |
+| 1       | Decision Tree     | $3.104,99 | $6.507,09 | 0,7516     |
+| 2       | **KNN Regressor** | $2.627,72 | $3.342,84 | **0,9264** |
+| 2       | Regressão Linear  | $3.286,58 | $4.589,26 | 0,8612     |
+| 2       | Decision Tree     | $3.080,99 | $6.021,57 | 0,7611     |
+
+O **KNN Regressor** foi o melhor algoritmo nos três clusters. Os modelos salvos para predição final são todos KNN especializados.
+
+---
+
+## 5. Comparação dos Resultados (`05_comparacao.ipynb`)
+
+### Qual abordagem teve menor erro?
+
+Comparando o melhor modelo de cada abordagem (KNN em ambos os casos):
+
+| Contexto              | R²     | MAE       | Δ R²    | Δ MAE    |
+| --------------------- | ------ | --------- | ------- | -------- |
+| **Global (baseline)** | 0,8028 | $3.514,20 | —       | —        |
+| Cluster 0             | 0,6881 | $3.540,22 | −0,1147 | +$26,02  |
+| Cluster 1             | 0,8176 | $3.464,89 | +0,0148 | −$49,31  |
+| Cluster 2             | 0,9264 | $2.627,72 | +0,1236 | −$886,48 |
+
+### A clusterização melhorou a predição?
+
+**Sim, em dois dos três clusters:**
+
+- **Cluster 1 (fumantes):** melhora moderada — R² subiu de 0,8028 para 0,8176 e MAE reduziu $49. O modelo especializado reconhece melhor os padrões de custo dentro do grupo de fumantes.
+
+- **Cluster 2 (não-fumantes mais velhos/com filhos):** melhora expressiva — R² subiu de 0,8028 para **0,9264** e MAE caiu de $3.514 para **$2.628**, redução de ~25%. O RMSE caiu 40% (de $5.533 para $3.343). Este é o grupo mais homogêneo do dataset, e a especialização do modelo capturou com muito mais precisão o comportamento dos custos.
+
+- **Cluster 0 (não-fumantes variados):** piora — R² caiu de 0,8028 para 0,6881. Este é o maior grupo (n=649) e apresenta alta variação interna. O subconjunto de teste (~130 registros) e o valor fixo de `k=5` no KNN podem não ter sido suficientes para representar a heterogeneidade do grupo.
+
+### Por quê a segmentação ajudou em alguns clusters e não em outros?
+
+A segmentação só traz ganhos quando os grupos formados são **internamente coesos**. O Cluster 2 é o mais homogêneo: reúne não-fumantes com perfil de idade e estrutura familiar semelhante, tornando o comportamento dos custos mais regular e previsível para qualquer modelo. O Cluster 0, apesar de grande, agrupa perfis muito distintos entre si, o que dificulta o aprendizado especializado.
+
+### Qual abordagem é mais adequada?
+
+A **regressão por cluster é superior** para os grupos 1 e 2, que juntos representam 689 dos 1.338 clientes (51,5% do dataset). Para o Cluster 0, o modelo global ainda é preferível.
+
+Para uso em produção, a recomendação é adotar o **pipeline completo** (segmentação → regressão especializada), pois ele nunca é pior do que o global para a maioria dos clientes — e é significativamente melhor para os grupos mais coesos.
+
+---
+
+## 6. Predição Final (`06_predicao_final.ipynb`)
+
+O notebook implementa um pipeline completo que:
+
+1. Recebe os dados brutos de um novo cliente
+2. Aplica o mesmo encoding e normalização do treinamento
+3. Identifica o cluster via K-Means
+4. Aplica o modelo KNN especializado do cluster correspondente
+5. Retorna o cluster identificado e o custo previsto
+
+**Exemplo de uso:**
+
+```python
+cluster, custo = prever(
+    age=40, sex='male', bmi=30.0,
+    children=2, smoker='yes', region='northwest'
+)
+# Cluster identificado: 1
+# Custo previsto: US$ 18.450,xx
 ```
 
-### 3. Criar e ativar o ambiente virtual
-
-```bash
-python -m venv venv
-venv\Scripts\activate
-```
-
-> 💡 Lembre de ativar o `venv` toda vez que abrir o VS Code.
-
-### 4. Instalar as dependências
-
-```bash
-pip install pandas scikit-learn matplotlib seaborn jupyter ipykernel joblib
-```
-
-### 5. Selecionar o kernel no VS Code
-
-Abra qualquer notebook → canto superior direito → **Select Kernel** → escolha o interpretador da `venv`.
-
 ---
 
-## ✅ Etapa 1 — Preparação do Dataset (`01_preparacao.ipynb`)
+## Conclusão
 
-**Responsável:** Bia | **Revisora:** Valéria
+A abordagem de **segmentação por clusters seguida de regressão especializada** demonstrou ser superior ao modelo global em dois dos três grupos identificados. O ganho mais expressivo ocorreu no Cluster 2, onde o KNN especializado atingiu R²=0,9264 — uma melhora de 12,4 pontos percentuais em relação ao baseline global — e reduziu o RMSE em 40%.
 
-### O que foi feito
+O principal aprendizado do projeto é que **a qualidade da segmentação determina o potencial de melhoria da regressão**: grupos homogêneos se beneficiam muito da especialização; grupos heterogêneos podem não ter amostras suficientes para que modelos baseados em similaridade (como o KNN) generalizem bem.
 
-- Carregamento do `insurance.csv` com pandas
-- Encoding de variáveis categóricas:
-  - `sex` e `smoker` → `LabelEncoder` (variáveis binárias)
-  - `region` → `get_dummies` com `drop_first=True` (4 categorias)
-- Normalização das variáveis de entrada com `StandardScaler`
-- Separação entre `X` (variáveis de entrada) e `y` (variável alvo: `charges`)
-- Exportação de `X_scaled.csv`, `y.csv` e `scaler.pkl` para a pasta `data/`
-
-### Colunas após o encoding
-
-| Coluna original | Transformação | Resultado                                                  |
-| --------------- | ------------- | ---------------------------------------------------------- |
-| `sex`           | LabelEncoder  | `0` = female, `1` = male                                   |
-| `smoker`        | LabelEncoder  | `0` = no, `1` = yes                                        |
-| `region`        | get_dummies   | `region_northwest`, `region_southeast`, `region_southwest` |
-| `charges`       | —             | variável alvo (`y`), removida de `X`                       |
-
-### Arquivos gerados
-
-| Arquivo             | Descrição                                         |
-| ------------------- | ------------------------------------------------- |
-| `data/X_scaled.csv` | Entrada normalizada — use para Etapas 2, 3 e 4    |
-| `data/y.csv`        | Variável alvo — use para Etapas 3 e 4             |
-| `data/scaler.pkl`   | Scaler treinado — use na Etapa 6 (predição final) |
-
----
-
-## ✅ Etapa 2 — Clusterização (02_clusterizacao.ipynb)
-
-**Responsável:** Valéria | **Revisora:** Fátima
-
-### O que foi feito
-
-- Carregamento dos dados normalizados (`X_scaled.csv`) gerados na Etapa 1
-- Aplicação do algoritmo de clusterização **K-Means**
-- Avaliação do número ideal de clusters utilizando:
-  - Método Elbow
-  - Silhouette Score
-- Escolha de `K=3` por apresentar boa separação dos grupos e melhor interpretabilidade
-- Aplicação do PCA (Principal Component Analysis) para redução de dimensionalidade e visualização dos clusters em 2D
-- Criação da coluna `cluster` no dataset
-- Interpretação estatística dos grupos encontrados
-- Exportação do dataset clusterizado e do modelo treinado
-
-### Resultado da Clusterização
-
-#### Silhouette Score final
-
-K=3 → 0.2305
-
-| Cluster | Quantidade |
-| ------- | ---------- |
-| 0       | 649        |
-| 1       | 325        |
-| 2       | 364        |
-
-
-Interpretação dos Clusters
-Cluster	Perfil resumido	Custo médio
-- 0	Não fumantes com idade e IMC variados → perfil de menor risco	Baixo a médio
-- 1	Fumantes com IMC elevado → perfil de maior risco e maior custo	Alto
-- 2	Não fumantes mais velhos e/ou com mais filhos → perfil intermediário	Médio
-
-
-Observação: A variável smoker demonstrou ser o principal fator de separação entre os clusters, indicando forte relação entre tabagismo e aumento dos custos de seguro de saúde.
-
-Visualizações geradas
-- Gráfico Elbow
-- Gráfico Silhouette Score
-- Visualização dos clusters com PCA
-- Distribuição dos clusters por custo (charges)
-
-Arquivos gerados
-
-| Arquivo                       |  Descrição                    |
-| -------                       | ----------                    |
-| data/insurance_clustered.csv  | Dataset com coluna de cluster |
-| models/kmeans_model.pkl       | Modelo K-Means treinado       |
-
-## ✅ Etapa 3 — Regressão Global (`03_regressao_global.ipynb`)
-
-**Responsável:** Fátima | **Revisor:** Ian
-
-### O que foi feito
-Nesta etapa, foram treinados modelos de regressão utilizando todo o conjunto de dados de forma integrada. O objetivo foi estabelecer uma linha de base (baseline) de desempenho preditivo global, permitindo avaliar posteriormente se a segmentação por clusters trará melhorias reais nas estimativas.
-
-Foram testados e validados três algoritmos distintos conforme o pipeline definido:
-- **Regressão Linear**
-- **KNN Regressor** (configurado com `n_neighbors=5`)
-- **Decision Tree Regressor** (configurado com `random_state=42`)
-
-A base de dados foi dividida utilizando a proporção padrão de 80% para treinamento e 20% para a fase de testes.
-
-### Métricas da Regressão Global
-Abaixo está o mapeamento comparativo de desempenho de cada algoritmo, ordenado pelo coeficiente de determinação ($R^2$):
-
-| Modelo | MAE | MSE | RMSE | R² |
-| :--- | :--- | :--- | :--- | :--- |
-| **Regressão Linear** | 4181.1944 | 33596915.8513 | 5796.2847 | 0.7833 |
-| **KNN Regressor** | 4261.2725 | 38221805.9901 | 6182.3787 | 0.7535 |
-| **Decision Tree Regressor** | 3073.4981 | 43232675.2758 | 6575.1559 | 0.7212 |
-
-### Conclusões da Etapa
-* O modelo de **Regressão Linear** obteve o maior coeficiente de determinação ($R^2 = 0.7833$), sendo capaz de explicar aproximadamente 78,33% da variabilidade dos custos de seguro de forma global.
-* A **Árvore de Decisão** (*Decision Tree*) registrou o menor Erro Absoluto Médio ($MAE = 3073.4981$), o que indica que, na maior parte das previsões cotidianas, ela erra por margens menores. No entanto, por apresentar um $MSE$ mais elevado, conclui-se que o modelo sofreu penalizações severas por erros mais discrepantes (outliers) em casos específicos da distribuição.
-
-*Nota: O arquivo contendo estes resultados foi exportado com sucesso para `data/resultados_global.csv`, estando pronto para consumo na Etapa 5 (Comparação de Resultados).*
-	
-## ✅ Etapa 4 — Regressão por Cluster (`04_regressao_clusters.ipynb`)
-
-**Responsável:** Ian | **Revisora:** Rebeca
-
-### O que foi feito
-
-- Carregamento de `X_scaled.csv`, `y.csv` e `cluster_labels.csv` gerados nas etapas anteriores
-- Para cada cluster (0, 1, 2): filtragem dos dados, divisão treino/teste (80%/20%, `random_state=42`) e treinamento dos mesmos 3 modelos da Etapa 3 para comparação direta
-- Avaliação com MAE, MSE, RMSE e R²
-- Identificação do melhor modelo por cluster (maior R²)
-- Geração de visualizações comparativas (R² e MAE por modelo/cluster; Previsto vs Real)
-
-### Métricas por Cluster
-
-| Cluster | Modelo | MAE | RMSE | R² |
-| :--- | :--- | :--- | :--- | :--- |
-| 0 | Regressão Linear | $4,278.50 | $6,063.40 | 0.6373 |
-| 0 | **KNN Regressor** | **$3,540.22** | **$5,622.67** | **0.6881** |
-| 0 | Decision Tree | $4,109.21 | $7,829.78 | 0.3952 |
-| 1 | Regressão Linear | $4,070.04 | $6,420.88 | 0.7581 |
-| 1 | **KNN Regressor** | **$3,464.89** | **$5,575.57** | **0.8176** |
-| 1 | Decision Tree | $3,104.99 | $6,507.09 | 0.7516 |
-| 2 | Regressão Linear | $3,286.58 | $4,589.26 | 0.8612 |
-| 2 | **KNN Regressor** | **$2,627.72** | **$3,342.84** | **0.9264** |
-| 2 | Decision Tree | $3,080.99 | $6,021.57 | 0.7611 |
-
-### Melhor modelo por cluster vs. Baseline Global
-
-| | Modelo | R² | MAE |
-| :--- | :--- | :--- | :--- |
-| Baseline Global | KNN Regressor | 0.8028 | $3,514.20 |
-| Cluster 0 | KNN Regressor | 0.6881 | $3,540.22 |
-| Cluster 1 | KNN Regressor | 0.8176 | $3,464.89 |
-| Cluster 2 | KNN Regressor | 0.9264 | $2,627.72 |
-
-**KNN Regressor foi o melhor modelo nos 3 clusters.** Cluster 2 (não-fumantes mais velhos/com filhos) apresentou o maior ganho com a segmentação (R²=0.9264 vs 0.8028 do baseline). Cluster 0 ficou abaixo do baseline global em R², o que pode indicar maior heterogeneidade interna neste grupo.
-
-### Arquivos gerados
-
-| Arquivo | Descrição |
-| --- | --- |
-| `data/resultados_clusters.csv` | Métricas de todos os modelos por cluster |
-| `data/modelo_cluster_0.pkl` | KNeighborsRegressor treinado — Cluster 0 |
-| `data/modelo_cluster_1.pkl` | KNeighborsRegressor treinado — Cluster 1 |
-| `data/modelo_cluster_2.pkl` | KNeighborsRegressor treinado — Cluster 2 |
-| `data/comparacao_modelos_clusters.png` | R² e MAE comparativos com linha de baseline |
-| `data/previsto_vs_real_clusters.png` | Scatter Previsto vs Real por cluster |
-
-----
-
-## 🗓️ Próximas etapas
-
-| Etapa                       | Responsável | Status                         |
-| --------------------------- | ----------- | ------------------------------ |
-| 1. Preparação do Dataset    | Bia         | ✅ Concluída                   |
-| 2. Clusterização            | Valéria     | ✅ Concluída                   |
-| 3. Regressão Global         | Fátima      | ✅ Concluída                   |
-| 4. Regressão por Cluster    | Ian         | ✅ Concluída                   |
-| 5. Comparação de Resultados | Rebeca      | 🔒 Aguarda Etapas 3 e 4        |
-| 6. Predição Final           | Todos       | 🔒 Aguarda Etapa 5             |
-
----
-
-## 👥 Integrantes
-
-| Nome    | Etapa líder                     | Etapa revisora |
-| ------- | ------------------------------- | -------------- |
-| Bia     | Etapa 1 — Preparação            | Etapa 5        |
-| Valéria | Etapa 2 — Clusterização         | Etapa 1        |
-| Fátima  | Etapa 3 — Regressão Global      | Etapa 2        |
-| Ian     | Etapa 4 — Regressão por Cluster | Etapa 3        |
-| Rebeca  | Etapa 5 — Comparação            | Etapa 4        |
-
----
-
-_Documento iniciado em 26/05/2026 por Bia — atualizar após cada merge._
+A variável `smoker` emergiu espontaneamente como o principal critério de separação do K-Means, confirmando seu papel dominante na determinação dos custos de seguro médico.
